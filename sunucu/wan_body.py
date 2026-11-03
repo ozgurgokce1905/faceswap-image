@@ -132,9 +132,15 @@ def run_body_swap(video_path: str, ref_image: str, out_path: str, work_dir: str,
     on_progress('Vücut üretiliyor (%d parça)' % clips, 10)
 
     # 2) Üretim
+    mem_gb = gpu_memory_gb()
     cmd = [WAN_PY, 'generate.py', '--task', 'animate-14B', '--ckpt_dir', WAN_CKPT, '--src_root_path', prep_dir,
            '--refert_num', '1', '--replace_flag', '--use_relighting_lora', '--save_file', gen_out,
-           '--sample_steps', str(p['steps']), '--base_seed', str(seed), '--offload_model', 'False']
+           '--sample_steps', str(p['steps']), '--base_seed', str(seed)]
+    if mem_gb >= 70:
+        cmd += ['--offload_model', 'False']  # H100/A100 80 GB: her şey GPU'da, en hızlı
+    else:
+        cmd += ['--offload_model', 'True', '--t5_cpu', '--convert_model_dtype']  # 48 GB kartlar (L40S/A6000): bellek tasarrufu
+    log('GPU belleği: %.0f GB -> %s\n' % (mem_gb, 'tam yükleme' if mem_gb >= 70 else 'bellek tasarrufu modu'))
     log('$ ' + ' '.join(cmd) + '\n')
     state = {'clip': 0, 'clips': clips, 'steps': p['steps']}
 
@@ -183,6 +189,14 @@ def run_body_swap(video_path: str, ref_image: str, out_path: str, work_dir: str,
     except Exception:
         pass
     return {'frames': n_frames, 'gen_seconds': round(gen_seconds), 'clips': clips, 'size': (W, H)}
+
+
+def gpu_memory_gb() -> float:
+    try:
+        out = subprocess.run(['nvidia-smi', '--query-gpu=memory.total', '--format=csv,noheader,nounits'], capture_output=True, text=True, timeout=10).stdout
+        return float(out.strip().splitlines()[0]) / 1024.0
+    except Exception:
+        return 80.0
 
 
 def _prep_progress(line: str, on_progress):
