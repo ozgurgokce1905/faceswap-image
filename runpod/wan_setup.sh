@@ -65,7 +65,14 @@ if [ ! -f $WAN_HOME/venv/.ok ]; then
   grep -v -E '^(torch|torchvision|torchaudio|flash_attn)' $WAN_HOME/Wan2.2/requirements.txt > /tmp/wan_req.txt
   $PIP install --no-input -r /tmp/wan_req.txt "numpy<2" "onnxruntime-gpu==1.24.4" peft pandas matplotlib loguru sentencepiece moviepy hydra-core omegaconf huggingface_hub > /tmp/wan_pip1.log 2>&1 || { tail -n 30 /tmp/wan_pip1.log; fail "pip (Wan paketleri) başarısız"; }
   tail -n 1 /tmp/wan_pip1.log
-  SAM2_BUILD_CUDA=0 $PIP install --no-input --no-build-isolation "git+https://github.com/facebookresearch/sam2.git@0e78a118995e66bb27d78518c4bd9a3e95b4e266" > /tmp/wan_pip2.log 2>&1 || { tail -n 30 /tmp/wan_pip2.log; fail "pip (SAM2) başarısız"; }
+  # SAM2 (Wan'ın sabitlediği eski sürüm CUDA eklentisini zorla derliyor; nvcc yok -> eklentisiz kur, gerekmiyor)
+  rm -rf $WAN_HOME/sam2
+  git clone -q https://github.com/facebookresearch/sam2.git $WAN_HOME/sam2 || fail "SAM2 indirilemedi"
+  git -C $WAN_HOME/sam2 checkout -q 0e78a118995e66bb27d78518c4bd9a3e95b4e266
+  sed -i 's/ext_modules=get_extensions(),/ext_modules=[],/' $WAN_HOME/sam2/setup.py
+  grep -q "ext_modules=\[\]" $WAN_HOME/sam2/setup.py || fail "SAM2 setup.py yaması uygulanamadı"
+  $PIP install --no-input --no-build-isolation --no-deps -e $WAN_HOME/sam2 > /tmp/wan_pip2.log 2>&1 || { tail -n 30 /tmp/wan_pip2.log; fail "pip (SAM2) başarısız"; }
+  $PIP install --no-input iopath hydra-core omegaconf pillow tqdm >> /tmp/wan_pip2.log 2>&1 || fail "SAM2 bağımlılıkları kurulamadı"
   $PY -c "import torch, flash_attn, diffusers, sam2, onnxruntime, cv2, numpy, easydict, imageio; assert numpy.__version__ < '2'; print('wan paketleri OK, torch', torch.__version__, 'numpy', numpy.__version__)" || fail "Wan paketleri eksik"
   # onnxruntime (poz/dedektör) CUDA kütüphanelerini torch'un nvidia paketlerinden bulsun
   SITE=$($PY -c "import site;print(site.getsitepackages()[0])")
