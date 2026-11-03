@@ -239,7 +239,8 @@ def main():
 
     # 5) SAM2 maske (seçili kişinin vücut noktalarıyla)
     log('Kişi maskesi (SAM2) çıkarılıyor')
-    predictor = build_sam2_video_predictor('sam2_hiera_l.yaml', os.path.join(args.ckpt, 'sam2', 'sam2_hiera_large.pt'))
+    # apply_postprocessing=False: delik doldurma SAM2'nin CUDA eklentisini (_C) ister, eklentisiz kurulumda yok; maske zaten genişletiliyor
+    predictor = build_sam2_video_predictor('sam2_hiera_l.yaml', os.path.join(args.ckpt, 'sam2', 'sam2_hiera_large.pt'), apply_postprocessing=False)
     masks = get_mask(predictor, frames, 400, metas)
 
     bg_images, aug_masks = [], []
