@@ -499,8 +499,7 @@ def _run_body_job(job_id: str, job: dict, job_dir: str, out_raw: str, out_final:
         if not wan_body.is_ready():
             wan_body.wait_setup(60 * 40, is_cancelled, lambda s: _set(job_id, stage=s, percent=1))
         # Dokunulan yüzün merkezi (referans karede, normalize)
-        with ff_bridge._lock:
-            det = ff_bridge.detect_faces_in_frame(job['target_path'], int(job['frame_number']))
+        det = ff_bridge.detect_faces_in_frame(job['target_path'], int(job['frame_number']))  # kendi kilidini alır
         faces = det.get('faces') or []
         if not faces:
             raise RuntimeError('Referans karede yüz bulunamadı')
