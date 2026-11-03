@@ -2,7 +2,8 @@
 # Tüm vücut modu (Wan2.2-Animate-14B, replacement) kurulumu. Tekrar çalıştırılabilir (idempotent).
 # Kullanım: bash wan_setup.sh   (ortam: WAN_HOME=/workspace/wan, FS=/workspace/fs)
 set -u
-WAN_HOME=${WAN_HOME:-/workspace/wan}
+WAN_HOME=${WAN_HOME:-/workspace/wan}          # kod + venv (imajda /opt/wan)
+WAN_CKPT=${WAN_CKPT:-$WAN_HOME/Wan2.2-Animate-14B}  # modeller (~50 GB, pod diskinde)
 FS=${FACESWAP_HOME:-/workspace/fs}
 STAGE=$FS/data/wan_stage.txt
 mkdir -p $WAN_HOME $FS/data $FS/logs
@@ -79,8 +80,11 @@ PYC
   touch $WAN_HOME/venv/.ok
 fi
 
+if [ "${SKIP_MODELS:-0}" = "1" ]; then echo "[WAN] paketler hazır (modeller atlandı)"; exit 0; fi
+
 # 3) Modeller (~50 GB; FLUX hariç)
-CK=$WAN_HOME/Wan2.2-Animate-14B
+CK=$WAN_CKPT
+mkdir -p $(dirname $CK)
 if [ ! -f $CK/.ok ]; then
   step "Tüm vücut modelleri indiriliyor (~50 GB, ilk sefer 5-15 dk)"
   export HF_HUB_ENABLE_HF_TRANSFER=0

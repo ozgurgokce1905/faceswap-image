@@ -17,10 +17,10 @@ from typing import Callable, Optional
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FS = os.environ.get('FACESWAP_HOME', os.path.dirname(HERE))
-WAN_HOME = os.environ.get('WAN_HOME', '/workspace/wan')
+WAN_HOME = os.environ.get('WAN_HOME') or ('/opt/wan' if os.path.isdir('/opt/wan') else '/workspace/wan')  # kod + venv
 WAN_REPO = os.path.join(WAN_HOME, 'Wan2.2')
 WAN_PY = os.path.join(WAN_HOME, 'venv', 'bin', 'python')
-WAN_CKPT = os.path.join(WAN_HOME, 'Wan2.2-Animate-14B')
+WAN_CKPT = os.environ.get('WAN_CKPT', '/workspace/wan/Wan2.2-Animate-14B')  # modeller (pod diski)
 STAGE_FILE = os.path.join(FS, 'data', 'wan_stage.txt')
 SETUP_SH = os.path.join(FS, 'runpod', 'wan_setup.sh')
 
@@ -96,7 +96,7 @@ def start_setup() -> bool:
             return False
         if _setup_running():
             return False
-        env = dict(os.environ, WAN_HOME=WAN_HOME, FACESWAP_HOME=FS)
+        env = dict(os.environ, WAN_HOME=WAN_HOME, WAN_CKPT=WAN_CKPT, FACESWAP_HOME=FS)
         _setup_proc = subprocess.Popen(['bash', SETUP_SH], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
 

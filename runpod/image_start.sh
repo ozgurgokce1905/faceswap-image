@@ -52,6 +52,7 @@ if [ -f $FS/code_upload.tar.gz ]; then tar xzf $FS/code_upload.tar.gz -C $FS && 
 
 export PATH=/opt/bin:/opt/venv/bin:$PATH
 export FACESWAP_HOME=$FS FACESWAP_FF_DIR=/opt/facefusion FACESWAP_PROVIDER=cuda FACESWAP_THREADS=${FACESWAP_THREADS:-8}
+export WAN_HOME=/opt/wan WAN_CKPT=/workspace/wan/Wan2.2-Animate-14B
 export PYTHONUNBUFFERED=1 PYTHONIOENCODING=utf-8
 PY=/opt/venv/bin/python
 

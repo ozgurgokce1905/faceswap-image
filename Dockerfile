@@ -41,6 +41,13 @@ RUN FACESWAP_HOME=/opt/fs FACESWAP_FF_DIR=/opt/facefusion FACESWAP_PROVIDER=cpu 
     /opt/venv/bin/python /opt/fs/sunucu/warmup.py \
     && du -sh /opt/facefusion/.assets
 
-ENV FACESWAP_FF_DIR=/opt/facefusion FACESWAP_PROVIDER=cuda FACESWAP_HOME=/workspace/fs FACESWAP_THREADS=8
+# Tüm vücut (Wan2.2 Animate) kodu + Python ortamı (torch cu128, flash-attn, SAM2) — modeller hariç (pod diskine iner)
+RUN apt-get update && apt-get install -y --no-install-recommends util-linux build-essential python3-dev && rm -rf /var/lib/apt/lists/* \
+    && WAN_HOME=/opt/wan FACESWAP_HOME=/opt/fs SKIP_MODELS=1 bash /opt/fs/runpod/wan_setup.sh \
+    && rm -rf /opt/fs/data /opt/fs/logs /root/.cache/pip \
+    && du -sh /opt/wan
+
+ENV FACESWAP_FF_DIR=/opt/facefusion FACESWAP_PROVIDER=cuda FACESWAP_HOME=/workspace/fs FACESWAP_THREADS=8 \
+    WAN_HOME=/opt/wan WAN_CKPT=/workspace/wan/Wan2.2-Animate-14B
 EXPOSE 8765
 CMD ["bash", "/opt/fs/runpod/image_start.sh"]
