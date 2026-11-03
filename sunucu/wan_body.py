@@ -53,8 +53,28 @@ def stage() -> str:
         return ''
 
 
+def _setup_running() -> bool:
+    if _setup_proc is not None and _setup_proc.poll() is None:
+        return True
+    # Sunucu yeniden başladıysa kurulum süreci arka planda sürüyor olabilir: kilit dosyası tutuluyor mu?
+    lock = os.path.join(WAN_HOME, '.setup.lock')
+    if os.path.isfile(lock):
+        try:
+            import fcntl
+            with open(lock, 'a') as fh:
+                try:
+                    fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    fcntl.flock(fh, fcntl.LOCK_UN)
+                    return False
+                except OSError:
+                    return True
+        except Exception:
+            return False
+    return False
+
+
 def status() -> dict:
-    installing = _setup_proc is not None and _setup_proc.poll() is None
+    installing = _setup_running()
     s = stage()
     if is_ready():
         st = 'ready'
@@ -74,7 +94,7 @@ def start_setup() -> bool:
     with _setup_lock:
         if is_ready():
             return False
-        if _setup_proc is not None and _setup_proc.poll() is None:
+        if _setup_running():
             return False
         env = dict(os.environ, WAN_HOME=WAN_HOME, FACESWAP_HOME=FS)
         _setup_proc = subprocess.Popen(['bash', SETUP_SH], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

@@ -11,6 +11,9 @@ exec > >(tee -a "$LOG") 2>&1
 step() { echo "[WAN] $*"; echo "$*" > $STAGE; }
 fail() { echo "[WAN] HATA: $*"; echo "HATA: $*" > $STAGE; exit 1; }
 echo "===== $(date -u) wan kurulum ====="
+# Aynı anda ikinci kurulum çalışmasın (sunucu yeniden başlarsa tekrar tetiklenebilir)
+exec 9>$WAN_HOME/.setup.lock
+flock -n 9 || { echo "[WAN] başka bir kurulum zaten çalışıyor, çıkılıyor"; exit 0; }
 
 # 1) Kod (sabit sürüm)
 WAN_COMMIT=1ea34ff48f87168174e12956e200b1d908b1c5ff
