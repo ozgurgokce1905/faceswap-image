@@ -42,6 +42,7 @@ if [ ! -f $WAN_HOME/venv/.ok ]; then
   $PYBIN -m venv --system-site-packages $WAN_HOME/venv || fail "venv oluşturulamadı"
   $PY -m pip install -q --upgrade pip
   PIP=$WAN_HOME/venv/bin/pip
+  $PIP install --no-input -q setuptools wheel packaging ninja  # SAM2 kaynak kurulumu için şart (hazır imajda sistem setuptools yok)
   if [ $NEED_TORCH = 1 ]; then
     step "torch kuruluyor (~3 GB)"
     $PIP install --no-input "torch==2.8.*" "torchvision" "torchaudio" --index-url https://download.pytorch.org/whl/cu128 > /tmp/wan_torch.log 2>&1 || { tail -n 20 /tmp/wan_torch.log; fail "torch kurulamadı"; }
