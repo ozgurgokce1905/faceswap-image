@@ -4,6 +4,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Üst üste push gelince eski derleme iptal: :latest her zaman en yeni kod olsun
+concurrency:
+  group: imaj-derle
+  cancel-in-progress: true
+
 permissions:
   contents: read
   packages: write
