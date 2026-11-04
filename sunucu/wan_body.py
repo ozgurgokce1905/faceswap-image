@@ -175,8 +175,10 @@ def run_body_swap(video_path: str, ref_image: str, out_path: str, work_dir: str,
                 frac = (state['clip'] + step / max(total, 1)) / state['clips']
                 on_progress('Vücut üretiliyor (parça %d/%d)' % (min(state['clip'] + 1, state['clips']), state['clips']),
                             10 + 82 * min(frac, 1.0))
-                if step == total:
+                # tqdm son satırı (12/12) iki kez basar; parçayı bir kez say
+                if step == total and state.get('last') != total:
                     state['clip'] += 1
+                state['last'] = step
 
     t_gen = time.time()
     _run(cmd, env, WAN_REPO, log, is_cancelled, gen_line)
