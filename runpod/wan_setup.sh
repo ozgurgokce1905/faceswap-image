@@ -63,7 +63,7 @@ if [ ! -f $WAN_HOME/venv/.ok ]; then
   done
   [ $FA_OK = 1 ] || fail "flash-attn hazır wheel bulunamadı ($TORCHTAG $PYTAG abi$ABI)"
   grep -v -E '^(torch|torchvision|torchaudio|flash_attn)' $WAN_HOME/Wan2.2/requirements.txt > /tmp/wan_req.txt
-  $PIP install --no-input -r /tmp/wan_req.txt "numpy<2" "onnxruntime-gpu==1.24.4" peft pandas matplotlib loguru sentencepiece moviepy hydra-core omegaconf huggingface_hub > /tmp/wan_pip1.log 2>&1 || { tail -n 30 /tmp/wan_pip1.log; fail "pip (Wan paketleri) başarısız"; }
+  $PIP install --no-input -r /tmp/wan_req.txt "numpy<2" "onnxruntime-gpu==1.24.4" peft pandas matplotlib loguru sentencepiece moviepy hydra-core omegaconf huggingface_hub librosa soundfile > /tmp/wan_pip1.log 2>&1 || { tail -n 30 /tmp/wan_pip1.log; fail "pip (Wan paketleri) başarısız"; }
   tail -n 1 /tmp/wan_pip1.log
   # SAM2 (Wan'ın sabitlediği eski sürüm CUDA eklentisini zorla derliyor; nvcc yok -> eklentisiz kur, gerekmiyor)
   rm -rf $WAN_HOME/sam2
