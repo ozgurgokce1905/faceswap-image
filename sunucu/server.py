@@ -404,7 +404,7 @@ def _set(job_id: str, **kw):
 
 
 def _worker():
-    global _current_job
+    global _current_job, _last_activity
     while True:
         job_id = None
         with _job_lock:
@@ -414,11 +414,15 @@ def _worker():
             time.sleep(0.5)
             continue
         _current_job = job_id
+        _last_activity = time.time()
         try:
             _run_job(job_id)
         except Exception as e:
             _set(job_id, status='error', error='Sunucu hatası: %s' % e, percent=0)
             _append_log(job_id, 'HATA: %s\n' % e)
+        # İş bitince boşta sayacı SIFIRDAN başlar: uzun süren bir işten sonra pod hemen
+        # kapanıp sonuç videoyu götürmesin; kullanıcıya indirmek için IDLE_MINUTES kadar süre kalır.
+        _last_activity = time.time()
         _current_job = None
 
 
