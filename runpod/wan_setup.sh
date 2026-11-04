@@ -63,7 +63,7 @@ if [ ! -f $WAN_HOME/venv/.ok ]; then
   done
   [ $FA_OK = 1 ] || fail "flash-attn hazır wheel bulunamadı ($TORCHTAG $PYTAG abi$ABI)"
   grep -v -E '^(torch|torchvision|torchaudio|flash_attn)' $WAN_HOME/Wan2.2/requirements.txt > /tmp/wan_req.txt
-  $PIP install --no-input -r /tmp/wan_req.txt "numpy<2" "onnxruntime-gpu==1.24.4" peft pandas matplotlib loguru sentencepiece moviepy hydra-core omegaconf huggingface_hub librosa soundfile > /tmp/wan_pip1.log 2>&1 || { tail -n 30 /tmp/wan_pip1.log; fail "pip (Wan paketleri) başarısız"; }
+  $PIP install --no-input -r /tmp/wan_req.txt "numpy<2" "onnxruntime-gpu==1.24.4" peft pandas matplotlib loguru sentencepiece moviepy hydra-core omegaconf huggingface_hub hf_transfer librosa soundfile > /tmp/wan_pip1.log 2>&1 || { tail -n 30 /tmp/wan_pip1.log; fail "pip (Wan paketleri) başarısız"; }
   tail -n 1 /tmp/wan_pip1.log
   # SAM2 (Wan'ın sabitlediği eski sürüm CUDA eklentisini zorla derliyor; nvcc yok -> eklentisiz kur, gerekmiyor)
   rm -rf $WAN_HOME/sam2
@@ -94,8 +94,9 @@ CK=$WAN_CKPT
 mkdir -p $(dirname $CK)
 if [ ! -f $CK/.ok ]; then
   step "Tüm vücut modelleri indiriliyor (~50 GB, ilk sefer 5-15 dk)"
-  export HF_HUB_ENABLE_HF_TRANSFER=0
-  $PY -m huggingface_hub.commands.huggingface_cli download Wan-AI/Wan2.2-Animate-14B --local-dir $CK --exclude "process_checkpoint/FLUX*" "*.md" "assets/*" > /tmp/wan_dl.log 2>&1 \
+  # hf_transfer: çok kanallı indirme (3-5 kat hızlı); olmazsa klasik yola düşer
+  HF_HUB_ENABLE_HF_TRANSFER=1 $PY -m huggingface_hub.commands.huggingface_cli download Wan-AI/Wan2.2-Animate-14B --local-dir $CK --exclude "process_checkpoint/FLUX*" "*.md" "assets/*" > /tmp/wan_dl.log 2>&1 \
+    || HF_HUB_ENABLE_HF_TRANSFER=0 $PY -m huggingface_hub.commands.huggingface_cli download Wan-AI/Wan2.2-Animate-14B --local-dir $CK --exclude "process_checkpoint/FLUX*" "*.md" "assets/*" > /tmp/wan_dl.log 2>&1 \
     || $WAN_HOME/venv/bin/huggingface-cli download Wan-AI/Wan2.2-Animate-14B --local-dir $CK --exclude "process_checkpoint/FLUX*" "*.md" "assets/*" > /tmp/wan_dl.log 2>&1 \
     || { tail -n 20 /tmp/wan_dl.log; fail "Model indirilemedi"; }
   [ -f $CK/process_checkpoint/det/yolov10m.onnx ] || fail "process_checkpoint eksik"
